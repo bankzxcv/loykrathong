@@ -14,7 +14,7 @@
   function update() {
     const active = fallback || document.fullscreenElement === scene;
     toggle.setAttribute('aria-pressed', String(active));
-    toggle.querySelector('span').textContent = active ? 'ออกจากเต็มจอ' : 'เต็มจอ';
+    toggle.querySelector('span').textContent = active ? 'Exit fullscreen' : 'Fullscreen';
     toggle.querySelector('path').setAttribute('d', active
       ? 'M9 4v5H4m16 0h-5V4m0 16v-5h5M4 15h5v5'
       : 'M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5');

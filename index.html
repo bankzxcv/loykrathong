@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10182f">
-  <meta name="description" content="อธิษฐานแล้วลอยกระทงดอกบัวบนสายน้ำใต้แสงจันทร์">
-  <title>ลอยกระทง · Loy Krathong</title>
+  <meta name="description" content="Make a wish and set a candlelit krathong afloat on a moonlit pond.">
+  <title>Loy Krathong</title>
   <link rel="icon" href="lotus.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <script defer src="pond.js"></script>
@@ -13,22 +13,27 @@
 </head>
 <body>
 <main id="loy-krathong">
-  <canvas role="img" aria-label="กระทงดอกบัวสีชมพูพร้อมแสงเทียนบนสายน้ำใต้แสงจันทร์"></canvas>
+  <canvas role="img" aria-label="A pink lotus krathong with a lit candle on a moonlit pond"></canvas>
   <header>
-    <div class="brand"><img src="lotus.svg" width="30" height="30" alt=""><span lang="en">Loy Krathong</span></div>
+    <img src="lotus.svg" width="30" height="30" alt="">
     <button class="fullscreen" type="button" aria-pressed="false">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/></svg>
-      <span>เต็มจอ</span>
+      <span>Fullscreen</span>
     </button>
   </header>
   <div class="intro">
-    <h1>ลอยกระทง</h1>
-    <p>อธิษฐาน แล้วปล่อยกระทงไปกับสายน้ำ</p>
+    <h1>Loy Krathong</h1>
+    <p>Make a wish and set it afloat.</p>
   </div>
-  <div class="actions">
-    <button class="release" type="button"><img src="lotus.svg" alt="" width="25" height="25"><span>ลอยกระทง</span></button>
-    <div class="caption"><span class="pond-hint">ปัดซ้ายหรือขวาบนผิวน้ำ</span><span role="status"></span></div>
-  </div>
+  <form class="actions">
+    <div class="wish">
+      <label for="wish">Your wish <span>(optional)</span></label>
+      <input id="wish" type="text" maxlength="120" autocomplete="off" enterkeyhint="send" placeholder="What are you wishing for?">
+    </div>
+    <blockquote class="sent-wish" tabindex="0" aria-label="Your wish" hidden></blockquote>
+    <button class="release" type="submit"><img src="lotus.svg" alt="" width="25" height="25"><span>Float my krathong</span></button>
+    <div class="caption"><span class="pond-hint">Or swipe left or right on the water</span><span role="status"></span></div>
+  </form>
 </main>
 </body>
 </html>

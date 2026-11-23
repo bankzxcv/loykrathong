@@ -1,7 +1,12 @@
 (() => {
   const root = document.getElementById('loy-krathong');
   const canvas = root.querySelector('canvas');
+  const actions = root.querySelector('.actions');
   const button = root.querySelector('.release');
+  const buttonLabel = button.querySelector('span');
+  const wish = root.querySelector('#wish');
+  const wishField = wish.closest('.wish');
+  const sentWish = root.querySelector('.sent-wish');
   const hint = root.querySelector('.pond-hint');
   const message = root.querySelector('[role="status"]');
   const ctx = canvas.getContext('2d');
@@ -10,6 +15,8 @@
   if (!ctx || !bg) return;
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const landscape = matchMedia('(max-height: 540px) and (min-aspect-ratio: 4/3) and (min-width: 500px)');
+  const floatDuration = 4.3;
   const tau = Math.PI * 2;
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
   const lerp = (from, to, t) => from + (to - from) * t;
@@ -26,8 +33,26 @@
     [random(), random(), random(), random()]);
   const fireflies = Array.from({length: 18}, () =>
     [random(), 0.35 + random() * 0.47, random() * tau, random()]);
-  const sparks = Array.from({length: 25}, () =>
-    [random() * tau, 0.12 + random() * 0.88, random(), random()]);
+  const fireworks = [
+    {start: 0.24, climb: 0.64, across: 0.19, altitude: 0.36, size: 0.96, colors: ['#ffd680', '#ff9d68', '#fff1ce']},
+    {start: 0.88, climb: 0.67, across: 0.84, altitude: 0.41, size: 0.75, colors: ['#ffa4cf', '#f978b7', '#ffe0dd']},
+    {start: 1.55, climb: 0.78, across: 0.52, altitude: 0.29, size: 1.09, colors: ['#c9a7ff', '#91bfff', '#fff0cd']}
+  ].map(burst => ({
+    ...burst,
+    sparks: Array.from({length: 62}, (_, i) => {
+      const inner = i >= 44;
+      const angle = ((inner ? (i - 44) / 18 : i / 44) + random() * 0.015) * tau;
+      const velocity = inner ? 0.24 + random() * 0.44 : 0.76 + random() * 0.34;
+      return {
+        dx: Math.cos(angle) * velocity,
+        dy: Math.sin(angle) * velocity,
+        life: 1.14 + random() * 0.75,
+        phase: random() * tau,
+        size: 0.65 + random() * 0.85,
+        color: burst.colors[i % burst.colors.length]
+      };
+    })
+  }));
   const shoreLights = [
     [0.08, 0.38, 0.2], [0.115, 0.397, 0.8], [0.144, 0.394, 0.3],
     [0.218, 0.413, 0.6], [0.82, 0.405, 0.8], [0.889, 0.395, 1],
@@ -40,6 +65,9 @@
   let moonX = 0;
   let moonY = 0;
   let moonRadius = 0;
+  let startX = 0;
+  let startY = 0;
+  let travelWidth = 0;
   let gesture = null;
   let dragOffset = 0;
   let float = null;
@@ -471,18 +499,85 @@
       ringRipple(x, y, size * (1.48 + stage * 1.56), (1 - stage) * 0.31);
     }
   }
-  function wishes(x, y, size, age) {
-    const life = clamp(age / 2.15, 0, 1);
-    if (life >= 1) return;
-    ringRipple(x, y, size * (1.55 + ease(life) * 2.25), 0.46 * (1 - life));
-    for (const [angle, length, spread, twinkle] of sparks) {
-      const t = ease(life);
-      const px = x + Math.cos(angle) * size * (0.2 + t * length * 2.65);
-      const py = y - size * (0.55 + t * (0.2 + spread) * 2.55) + Math.sin(angle) * size * t * 0.47;
-      const opacity = (1 - life) * (0.5 + 0.5 * Math.sin(age * 6 + twinkle * tau));
-      sparkle(px, py, (1.05 + twinkle * 2.3) * (1 - life * 0.55),
-        'rgba(255,213,155,' + opacity + ')');
+  function boatX(progress) {
+    return startX + lerp(width * float.offset, travelWidth * float.direction, ease(progress));
+  }
+
+  function boatY(progress) {
+    return lerp(startY, height * 0.495, fade(progress));
+  }
+
+  function drawFireworks(age, fullSize) {
+    const compact = landscape.matches;
+    const scale = clamp(Math.min(width, height) * 0.148, 32, 115);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (const burst of fireworks) {
+      const time = age - burst.start;
+      if (time < 0 || time > burst.climb + 1.9) continue;
+      const across = float.direction > 0 ? burst.across : 1 - burst.across;
+      const x = width * (compact ? lerp(0.48, 0.91, across) : lerp(0.14, 0.86, across));
+      const y = height * burst.altitude;
+      const radius = scale * burst.size;
+      const [glow, , core] = burst.colors;
+      if (time < burst.climb) {
+        const launch = burst.start / floatDuration;
+        const fromX = boatX(launch);
+        const fromY = boatY(launch) - fullSize * lerp(1, 0.292, fade(launch)) * 1.9;
+        const rise = time / burst.climb;
+        const tail = Math.max(0, rise - 0.13);
+        const headX = lerp(fromX, x, rise);
+        const headY = lerp(fromY, y, ease(rise));
+        const tailX = lerp(fromX, x, tail);
+        const tailY = lerp(fromY, y, ease(tail));
+        const trail = ctx.createLinearGradient(tailX, tailY, headX, headY);
+        trail.addColorStop(0, glow + '00');
+        trail.addColorStop(1, glow);
+        ctx.globalAlpha = 0.76;
+        ctx.strokeStyle = trail;
+        ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(headX, headY);
+        ctx.stroke();
+        ellipse(ctx, headX, headY, 1.35, 1.35, core);
+        continue;
+      }
+
+      const fall = time - burst.climb;
+      ctx.globalAlpha = 0.65 * (1 - clamp(fall / 0.55, 0, 1));
+      halo(ctx, x, y, radius * 0.52, [[0, glow + '6b'], [1, glow + '00']]);
+      const strength = 1 - clamp(fall / 1.65, 0, 1);
+      ctx.globalAlpha = strength * 0.7;
+      halo(ctx, x, horizon + 16, radius * 1.27, [[0, glow + '36'], [1, glow + '00']], 0.21);
+      const reach = 1 - Math.exp(-fall * 2.55);
+      const trailAge = Math.max(0, fall - 0.14);
+      const trailReach = 1 - Math.exp(-trailAge * 2.55);
+      for (const spark of burst.sparks) {
+        if (fall >= spark.life) continue;
+        const px = x + spark.dx * radius * reach;
+        const py = y + radius * (spark.dy * reach + fall * fall * 0.15);
+        const twinkle = 0.8 + 0.2 * Math.sin(fall * 13 + spark.phase);
+        const opacity = Math.pow(1 - fall / spark.life, 0.85) * twinkle;
+        ctx.globalAlpha = opacity * 0.48;
+        ctx.strokeStyle = spark.color;
+        ctx.lineWidth = spark.size;
+        ctx.beginPath();
+        ctx.moveTo(x + spark.dx * radius * trailReach,
+          y + radius * (spark.dy * trailReach + trailAge * trailAge * 0.15));
+        ctx.lineTo(px, py);
+        ctx.stroke();
+        ctx.globalAlpha = opacity * 0.81;
+        ellipse(ctx, px, py, spark.size, spark.size, spark.color);
+        if (spark.size > 1.37) {
+          ctx.globalAlpha = opacity * 0.17;
+          const reflectionY = horizon + 13 + (y + radius - py) * 0.27;
+          ellipse(ctx, px, reflectionY, spark.size * (2.5 + reach), 0.6, spark.color);
+        }
+      }
     }
+    ctx.restore();
   }
 
   function render(time) {
@@ -495,25 +590,25 @@
     const now = motion.matches ? 0 : time / 1000;
     let progress = 0;
     let age = 0;
-    let x = width / 2 + dragOffset;
-    let y = height * 0.708;
+    let x = startX + dragOffset;
+    let y = startY;
     const fullSize = clamp(Math.min(width * 0.123, height * 0.125), 29, 94);
     let size = fullSize;
     let yaw = 0.23 + Math.sin(now * 0.73) * 0.09 + dragOffset * 0.008;
     let rocking = Math.sin(now * 1.98) * 0.039 + dragOffset * 0.0024;
     if (float) {
       age = Math.max(0, (time - float.start) / 1000);
-      if (motion.matches) float.settled = true;
-      progress = float.settled ? 1 : clamp(age / 4.3, 0, 1);
+      progress = motion.matches || float.settled ? 1 : clamp(age / floatDuration, 0, 1);
       const travel = ease(progress);
-      x = lerp(width * (0.5 + float.offset), width * (0.5 + float.direction * 0.293), travel);
-      y = lerp(height * 0.708, height * 0.495, fade(progress));
+      x = boatX(progress);
+      y = boatY(progress);
       size = fullSize * lerp(1, 0.292, fade(progress));
       yaw += float.direction * travel * 0.94;
       rocking += float.direction * Math.sin(progress * Math.PI) * 0.13;
-      if (progress === 1 && button.disabled) {
-        button.disabled = false;
-        button.querySelector('span').textContent = 'ลอยอีกใบ';
+      if (progress === 1 && !float.settled) {
+        float.settled = true;
+        button.removeAttribute('aria-disabled');
+        buttonLabel.textContent = 'Float another';
       }
     }
     if (!motion.matches) y += Math.sin(now * 2.05) * size * 0.045;
@@ -521,11 +616,13 @@
     ctx.drawImage(backdrop, 0, 0, width, height);
     waterMotion(now);
     drawFireflies(now);
+    if (float && !float.settled) {
+      const ripple = clamp(age / 1.8, 0, 1);
+      ringRipple(boatX(0), startY, fullSize * (1.55 + ease(ripple) * 2.25), 0.41 * (1 - ripple));
+      drawFireworks(age, fullSize);
+    }
     boatWater(x, y, size, now);
     drawMesh(x, y, size, yaw, rocking, now);
-    if (float && !motion.matches && age < 2.15) {
-      wishes(width * (0.5 + float.offset), height * 0.708, fullSize, age);
-    }
   }
 
   function animate(time) {
@@ -548,6 +645,9 @@
     canvas.width = backdrop.width = Math.max(1, Math.round(width * ratio));
     canvas.height = backdrop.height = Math.max(1, Math.round(height * ratio));
     horizon = height * 0.445;
+    startX = width * (landscape.matches ? 0.68 : 0.5);
+    startY = landscape.matches ? height * 0.79 : clamp(height * 0.69, horizon + 24, height - 160);
+    travelWidth = width * (landscape.matches ? 0.18 : 0.293);
     moonX = width * 0.735;
     moonY = height * 0.245;
     moonRadius = Math.min(width * 0.062, height * 0.084, 70);
@@ -563,10 +663,14 @@
     float = {direction: side, offset: width ? dragOffset / width : 0, start: performance.now()};
     dragOffset = 0;
     returnMotion = null;
-    button.disabled = true;
-    button.querySelector('span').textContent = 'กำลังลอย…';
+    button.setAttribute('aria-disabled', 'true');
+    buttonLabel.textContent = 'Floating away…';
+    if (document.activeElement === wish) button.focus({preventScroll: true});
+    wishField.hidden = true;
+    sentWish.textContent = wish.value.trim();
+    sentWish.hidden = !sentWish.textContent;
     hint.hidden = true;
-    message.textContent = 'ขอให้สมหวังนะ ✨';
+    message.textContent = 'May your wish come true ✨';
     render(performance.now());
     schedule();
   }
@@ -574,16 +678,21 @@
     float = null;
     dragOffset = 0;
     returnMotion = null;
-    button.querySelector('span').textContent = 'ลอยกระทง';
+    buttonLabel.textContent = 'Float my krathong';
+    wish.value = '';
+    wishField.hidden = false;
+    sentWish.hidden = true;
+    sentWish.textContent = '';
     hint.hidden = false;
     message.textContent = '';
     render(performance.now());
     schedule();
   }
 
-  button.addEventListener('click', () => {
-    if (float) next();
-    else release(-direction);
+  actions.addEventListener('submit', event => {
+    event.preventDefault();
+    if (float?.settled) next();
+    else if (!float) release(-direction);
   });
   canvas.addEventListener('pointerdown', event => {
     if (event.button !== 0 || gesture || float) return;
