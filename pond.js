@@ -7,8 +7,12 @@
   const wish = root.querySelector('#wish');
   const wishField = wish.closest('.wish');
   const sentWish = root.querySelector('.sent-wish');
+  const shareButton = root.querySelector('.share');
+  const saveButton = root.querySelector('.save-story');
+  const shareWish = root.querySelector('.share-wish');
+  const includeWish = shareWish.querySelector('input');
   const hint = root.querySelector('.pond-hint');
-  const message = root.querySelector('[role="status"]');
+  const message = actions.querySelector('[role="status"]');
   const ctx = canvas.getContext('2d');
   const backdrop = document.createElement('canvas');
   const bg = backdrop.getContext('2d');
@@ -62,9 +66,6 @@
   let height = 0;
   let ratio = 1;
   let horizon = 0;
-  let moonX = 0;
-  let moonY = 0;
-  let moonRadius = 0;
   let startX = 0;
   let startY = 0;
   let travelWidth = 0;
@@ -75,6 +76,14 @@
   let frame = null;
   let lastDraw = -Infinity;
   let returnMotion = null;
+  let storyFile = null;
+  let storyRequest = 0;
+
+  const distantBoats = [
+    [0.10, 0.10, 0.7], [0.31, 0.08, 2.5], [0.51, 0.12, 4.1], [0.73, 0.07, 5.1],
+    [0.91, 0.15, 0.2], [0.19, 0.20, 1.7], [0.40, 0.21, 3.7], [0.83, 0.27, 5.6],
+    [0.07, 0.36, 2.2], [0.62, 0.25, 0.8], [0.25, 0.42, 4.8], [0.93, 0.42, 3.2]
+  ];
 
   function ellipse(context, x, y, rx, ry, color, rotation = 0) {
     context.beginPath();
@@ -93,7 +102,7 @@
     context.restore();
   }
 
-  function shore(phase, color, level, rise) {
+  function shore(bg, width, horizon, phase, color, level, rise) {
     bg.beginPath();
     bg.moveTo(0, horizon + 13);
     for (let i = 0; i <= 120; i++) {
@@ -109,7 +118,7 @@
     bg.fill();
   }
 
-  function pads(x, y, radius, angle, bloom) {
+  function pads(bg, x, y, radius, angle, bloom) {
     bg.save();
     bg.translate(x, y);
     bg.rotate(angle);
@@ -157,7 +166,7 @@
   }
 
   // Distant chedis and a layered temple roof behind the tree line.
-  function temple(x, scale) {
+  function temple(bg, horizon, x, scale) {
     bg.save();
     bg.translate(x, horizon + 4);
     bg.scale(scale, scale);
@@ -197,7 +206,11 @@
     bg.restore();
   }
 
-  function paintBackdrop() {
+  function paintBackdrop(bg, width, height, ratio) {
+    const horizon = height * 0.445;
+    const moonX = width * 0.735;
+    const moonY = height * 0.245;
+    const moonRadius = Math.min(width * 0.062, height * 0.084, 70);
     bg.setTransform(ratio, 0, 0, ratio, 0, 0);
     const sky = bg.createLinearGradient(0, 0, 0, horizon + 14);
     sky.addColorStop(0, '#0e142e');
@@ -245,10 +258,10 @@
       bg.fillStyle = layer ? '#58445c' : '#70546b';
       bg.fill();
     }
-    temple(width * 0.84, Math.min(width/620, height/490, 1.55));
-    shore(1.8, '#3a2c4c', -1, height * 0.083);
-    shore(0.8, '#27213e', 2, height * 0.066);
-    shore(3.4, '#1b1a32', 6, height * 0.049);
+    temple(bg, horizon, width * 0.84, Math.min(width/620, height/490, 1.55));
+    shore(bg, width, horizon, 1.8, '#3a2c4c', -1, height * 0.083);
+    shore(bg, width, horizon, 0.8, '#27213e', 2, height * 0.066);
+    shore(bg, width, horizon, 3.4, '#1b1a32', 6, height * 0.049);
     const pond = bg.createLinearGradient(0, horizon + 7, 0, height);
     pond.addColorStop(0, '#5a425c');
     pond.addColorStop(0.38, '#31344d');
@@ -267,12 +280,12 @@
         [[0, '#fb9e7b55'], [1, '#fb9e7b00']], 0.3);
     }
     const padSize = Math.min(width * 0.105, height * 0.083, 78);
-    pads(width * 0.105, height * 0.859, padSize, -0.22, true);
-    pads(width * 0.025, height * 0.904, padSize * 0.86, 0.23, false);
-    pads(width * 0.20, height * 0.879, padSize * 0.61, 0.18, false);
-    pads(width * 0.903, height * 0.811, padSize * 0.79, 0.3, true);
-    pads(width * 0.978, height * 0.856, padSize * 1.08, -0.18, false);
-    pads(width * 0.905, height * 0.914, padSize * 0.47, 0.26, false);
+    pads(bg, width * 0.105, height * 0.859, padSize, -0.22, true);
+    pads(bg, width * 0.025, height * 0.904, padSize * 0.86, 0.23, false);
+    pads(bg, width * 0.20, height * 0.879, padSize * 0.61, 0.18, false);
+    pads(bg, width * 0.903, height * 0.811, padSize * 0.79, 0.3, true);
+    pads(bg, width * 0.978, height * 0.856, padSize * 1.08, -0.18, false);
+    pads(bg, width * 0.905, height * 0.914, padSize * 0.47, 0.26, false);
     const vignette = bg.createLinearGradient(0, 0, 0, height);
     vignette.addColorStop(0, '#080d261d');
     vignette.addColorStop(0.44, '#080d2600');
@@ -365,7 +378,7 @@
     (row, v) => blend([255, 192, 111], [255, 235, 165], row * 0.21 + (1 + Math.cos(v * tau)) * 0.07));
   ring([[0.025, 1.43], [0.02, 1.52], [0.004, 1.52]], () => [86, 48, 59]);
 
-  function drawMesh(x, y, size, yaw, rocking, now) {
+  function drawMesh(ctx, x, y, size, yaw, rocking, now) {
     const sy = Math.sin(yaw);
     const cy = Math.cos(yaw);
     const sinTilt = Math.sin(rocking);
@@ -433,7 +446,8 @@
     ctx.restore();
   }
 
-  function waterMotion(now) {
+  function waterMotion(ctx, width, height, horizon, now) {
+    const moonX = width * 0.735;
     for (const [x, depth, phase, power] of water) {
       const y = horizon + 8 + Math.pow(depth, 1.65) * (height - horizon - 15);
       const shimmer = 0.5 + 0.5 * Math.sin(now * (0.68 + power) + phase * tau);
@@ -477,14 +491,14 @@
     }
   }
 
-  function ringRipple(x, y, rx, opacity) {
+  function ringRipple(ctx, x, y, rx, opacity) {
     ctx.beginPath();
     ctx.ellipse(x, y, rx, rx * 0.27, 0, 0, tau);
     ctx.strokeStyle = 'rgba(232,178,198,' + opacity + ')';
     ctx.lineWidth = 0.75;
     ctx.stroke();
   }
-  function boatWater(x, y, size, now) {
+  function boatWater(ctx, x, y, size, now) {
     ellipse(ctx, x, y + size * 0.08, size * 1.67, size * 0.42, '#090d2069');
     halo(ctx, x, y + size * 0.38, size * 1.54,
       [[0, '#ffa8874d'], [0.4, '#ed83a731'], [1, '#ed83a700']], 0.35);
@@ -496,9 +510,28 @@
     }
     for (let i = 0; i < 3; i++) {
       const stage = (now * 0.47 + i / 3) % 1;
-      ringRipple(x, y, size * (1.48 + stage * 1.56), (1 - stage) * 0.31);
+      ringRipple(ctx, x, y, size * (1.48 + stage * 1.56), (1 - stage) * 0.31);
     }
   }
+  function drawDistantBoats(ctx, width, height, horizon, now) {
+    const scale = clamp(Math.min(width, height) / 390, 0.72, 1.55);
+    for (const [across, depth, phase] of distantBoats) {
+      const x = width * across + Math.sin(now * 0.11 + phase) * scale * (7 + depth * 26);
+      const y = horizon + 10 + (height - horizon) * depth + Math.sin(now * 0.9 + phase) * 1.1;
+      const size = scale * (2 + depth * 15);
+      const flameY = y - size * 1.14;
+      ellipse(ctx, x, y + 2, size * 1.45, size * 0.31, '#10162870');
+      ellipse(ctx, x, y, size, size * 0.31, '#416763');
+      ellipse(ctx, x - size * 0.48, y - size * 0.28, size * 0.45, size * 0.20, '#96627e', 0.35);
+      ellipse(ctx, x + size * 0.48, y - size * 0.28, size * 0.45, size * 0.20, '#a36c84', -0.35);
+      halo(ctx, x, flameY, size * 1.25, [[0, '#f6b26f49'], [1, '#f6b26f00']]);
+      ctx.fillStyle = '#b89576';
+      ctx.fillRect(x - size * 0.08, flameY, size * 0.16, size * 0.79);
+      ellipse(ctx, x, flameY, size * 0.115, size * 0.23, '#ffdcaa');
+      ellipse(ctx, x + Math.sin(now + phase), y + size * 0.58, size * 0.49, size * 0.09, '#eab38147');
+    }
+  }
+
   function boatX(progress) {
     return startX + lerp(width * float.offset, travelWidth * float.direction, ease(progress));
   }
@@ -545,40 +578,163 @@
         continue;
       }
 
-      const fall = time - burst.climb;
-      ctx.globalAlpha = 0.65 * (1 - clamp(fall / 0.55, 0, 1));
-      halo(ctx, x, y, radius * 0.52, [[0, glow + '6b'], [1, glow + '00']]);
-      const strength = 1 - clamp(fall / 1.65, 0, 1);
-      ctx.globalAlpha = strength * 0.7;
-      halo(ctx, x, horizon + 16, radius * 1.27, [[0, glow + '36'], [1, glow + '00']], 0.21);
-      const reach = 1 - Math.exp(-fall * 2.55);
-      const trailAge = Math.max(0, fall - 0.14);
-      const trailReach = 1 - Math.exp(-trailAge * 2.55);
-      for (const spark of burst.sparks) {
-        if (fall >= spark.life) continue;
-        const px = x + spark.dx * radius * reach;
-        const py = y + radius * (spark.dy * reach + fall * fall * 0.15);
-        const twinkle = 0.8 + 0.2 * Math.sin(fall * 13 + spark.phase);
-        const opacity = Math.pow(1 - fall / spark.life, 0.85) * twinkle;
-        ctx.globalAlpha = opacity * 0.48;
-        ctx.strokeStyle = spark.color;
-        ctx.lineWidth = spark.size;
-        ctx.beginPath();
-        ctx.moveTo(x + spark.dx * radius * trailReach,
-          y + radius * (spark.dy * trailReach + trailAge * trailAge * 0.15));
-        ctx.lineTo(px, py);
-        ctx.stroke();
-        ctx.globalAlpha = opacity * 0.81;
-        ellipse(ctx, px, py, spark.size, spark.size, spark.color);
-        if (spark.size > 1.37) {
-          ctx.globalAlpha = opacity * 0.17;
-          const reflectionY = horizon + 13 + (y + radius - py) * 0.27;
-          ellipse(ctx, px, reflectionY, spark.size * (2.5 + reach), 0.6, spark.color);
-        }
-      }
+      drawBurst(ctx, burst, time - burst.climb, x, y, radius, horizon);
     }
     ctx.restore();
   }
+
+  function drawBurst(ctx, burst, fall, x, y, radius, horizon) {
+    const [glow] = burst.colors;
+    ctx.globalAlpha = 0.65 * (1 - clamp(fall / 0.55, 0, 1));
+    halo(ctx, x, y, radius * 0.52, [[0, glow + '6b'], [1, glow + '00']]);
+    const strength = 1 - clamp(fall / 1.65, 0, 1);
+    ctx.globalAlpha = strength * 0.7;
+    halo(ctx, x, horizon + 16, radius * 1.27, [[0, glow + '36'], [1, glow + '00']], 0.21);
+    const reach = 1 - Math.exp(-fall * 2.55);
+    const trailAge = Math.max(0, fall - 0.14);
+    const trailReach = 1 - Math.exp(-trailAge * 2.55);
+    for (const spark of burst.sparks) {
+      if (fall >= spark.life) continue;
+      const px = x + spark.dx * radius * reach;
+      const py = y + radius * (spark.dy * reach + fall * fall * 0.15);
+      const twinkle = 0.8 + 0.2 * Math.sin(fall * 13 + spark.phase);
+      const opacity = Math.pow(1 - fall / spark.life, 0.85) * twinkle;
+      ctx.globalAlpha = opacity * 0.48;
+      ctx.strokeStyle = spark.color;
+      ctx.lineWidth = spark.size;
+      ctx.beginPath();
+      ctx.moveTo(x + spark.dx * radius * trailReach,
+        y + radius * (spark.dy * trailReach + trailAge * trailAge * 0.15));
+      ctx.lineTo(px, py);
+      ctx.stroke();
+      ctx.globalAlpha = opacity * 0.81;
+      ellipse(ctx, px, py, spark.size, spark.size, spark.color);
+      if (spark.size > 1.37) {
+        ctx.globalAlpha = opacity * 0.17;
+        const reflectionY = horizon + 13 + (y + radius - py) * 0.27;
+        ellipse(ctx, px, reflectionY, spark.size * (2.5 + reach), 0.6, spark.color);
+      }
+    }
+  }
+
+  function storyLines(image, text, maxWidth) {
+    const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter() : null;
+    const characters = segmenter ? Array.from(segmenter.segment(text), part => part.segment) : Array.from(text);
+    const lines = [];
+    let line = '';
+    for (const character of characters) {
+      if (image.measureText(line + character).width > maxWidth) {
+        const space = line.lastIndexOf(' ');
+        lines.push(space > 0 ? line.slice(0, space) : line);
+        line = (space > 0 ? line.slice(space + 1) : '') + character;
+        line = line.trimStart();
+      } else {
+        line += character;
+      }
+    }
+    if (line.trim()) lines.push(line.trim());
+    return lines;
+  }
+
+  function makeStory(text) {
+    const poster = document.createElement('canvas');
+    const width = 540;
+    const height = 960;
+    const horizon = height * 0.445;
+    poster.width = width * 2;
+    poster.height = height * 2;
+    const image = poster.getContext('2d');
+    if (!image) return Promise.resolve(null);
+
+    paintBackdrop(image, width, height, 2);
+    waterMotion(image, width, height, horizon, 0);
+    drawDistantBoats(image, width, height, horizon, 0);
+    image.save();
+    image.globalCompositeOperation = 'lighter';
+    image.lineCap = 'round';
+    for (const burst of fireworks) {
+      const across = float.direction > 0 ? burst.across : 1 - burst.across;
+      drawBurst(image, burst, 0.48, width * lerp(0.15, 0.85, across), height * burst.altitude,
+        83 * burst.size, horizon);
+    }
+    image.restore();
+    boatWater(image, width / 2, 628, 78, 0);
+    drawMesh(image, width / 2, 628, 78, float.direction * 0.35, 0, 0);
+
+    image.textAlign = 'center';
+    image.fillStyle = '#fff1db';
+    image.font = '52px Georgia, serif';
+    image.fillText('Loy Krathong', width / 2, 155);
+    image.font = '19px system-ui, sans-serif';
+    image.direction = 'inherit';
+    const lines = text ? storyLines(image, text, 392) : ['May your wish come true'];
+    const quoteY = 755 - (lines.length - 1) * 12;
+    lines.forEach((line, index) => image.fillText(line, width / 2, quoteY + index * 24));
+    image.fillStyle = '#e1c7ba';
+    image.font = '13px system-ui, sans-serif';
+    image.fillText('bankzxcv.github.io/loykrathong', width / 2, 854);
+
+    return new Promise(resolve => poster.toBlob(blob => {
+      resolve(blob && new File([blob], 'loy-krathong.png', {type: 'image/png'}));
+    }, 'image/png'));
+  }
+
+  function canShareStory(file) {
+    return Boolean(file && navigator.share && navigator.canShare?.({files: [file]}));
+  }
+
+  async function prepareStory() {
+    const request = ++storyRequest;
+    shareButton.disabled = true;
+    saveButton.disabled = true;
+    storyFile = null;
+    let file;
+    try {
+      file = await makeStory(includeWish.checked ? sentWish.textContent : '');
+    } catch {
+      file = null;
+    }
+    if (request !== storyRequest) return;
+    storyFile = file;
+    const nativeShare = canShareStory(file);
+    shareButton.disabled = !file;
+    saveButton.hidden = !nativeShare;
+    saveButton.disabled = !file;
+    if (!file) message.textContent = 'The image could not be created.';
+  }
+
+  function downloadStory(file) {
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  includeWish.addEventListener('change', prepareStory);
+  saveButton.addEventListener('click', () => {
+    if (storyFile) downloadStory(storyFile);
+  });
+  shareButton.addEventListener('click', async () => {
+    const file = storyFile;
+    if (!file) return;
+    if (!canShareStory(file)) {
+      downloadStory(file);
+      message.textContent = 'Upload the saved image to Instagram.';
+      return;
+    }
+    try {
+      await navigator.share({files: [file]});
+    } catch (error) {
+      if (error.name !== 'AbortError' && file === storyFile) {
+        saveButton.focus();
+        message.textContent = 'Try saving the image to share it.';
+      }
+    }
+  });
 
   function render(time) {
     if (!width || !height) return;
@@ -609,20 +765,24 @@
         float.settled = true;
         button.removeAttribute('aria-disabled');
         buttonLabel.textContent = 'Float another';
+        shareButton.hidden = false;
+        shareWish.hidden = !sentWish.textContent;
+        prepareStory();
       }
     }
     if (!motion.matches) y += Math.sin(now * 2.05) * size * 0.045;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     ctx.drawImage(backdrop, 0, 0, width, height);
-    waterMotion(now);
+    waterMotion(ctx, width, height, horizon, now);
+    drawDistantBoats(ctx, width, height, horizon, now);
     drawFireflies(now);
     if (float && !float.settled) {
       const ripple = clamp(age / 1.8, 0, 1);
-      ringRipple(boatX(0), startY, fullSize * (1.55 + ease(ripple) * 2.25), 0.41 * (1 - ripple));
+      ringRipple(ctx, boatX(0), startY, fullSize * (1.55 + ease(ripple) * 2.25), 0.41 * (1 - ripple));
       drawFireworks(age, fullSize);
     }
-    boatWater(x, y, size, now);
-    drawMesh(x, y, size, yaw, rocking, now);
+    boatWater(ctx, x, y, size, now);
+    drawMesh(ctx, x, y, size, yaw, rocking, now);
   }
 
   function animate(time) {
@@ -648,10 +808,7 @@
     startX = width * (landscape.matches ? 0.68 : 0.5);
     startY = landscape.matches ? height * 0.79 : clamp(height * 0.69, horizon + 24, height - 160);
     travelWidth = width * (landscape.matches ? 0.18 : 0.293);
-    moonX = width * 0.735;
-    moonY = height * 0.245;
-    moonRadius = Math.min(width * 0.062, height * 0.084, 70);
-    paintBackdrop();
+    paintBackdrop(bg, width, height, ratio);
     render(performance.now());
     schedule();
   }
@@ -676,6 +833,12 @@
   }
   function next() {
     float = null;
+    storyRequest++;
+    storyFile = null;
+    shareButton.hidden = true;
+    saveButton.hidden = true;
+    shareWish.hidden = true;
+    includeWish.checked = false;
     dragOffset = 0;
     returnMotion = null;
     buttonLabel.textContent = 'Float my krathong';
