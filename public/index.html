@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10182f">
+  <meta name="description" content="Make a wish and set a candlelit krathong afloat on a moonlit pond.">
+  <title>Loy Krathong</title>
+  <link rel="icon" href="lotus.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="pond.js"></script>
+  <script defer src="fullscreen.js"></script>
+  <script defer src="music.js"></script>
+</head>
+<body>
+<main id="loy-krathong">
+  <canvas role="img" aria-label="A pink lotus krathong with a lit candle on a moonlit pond"></canvas>
+  <header>
+    <img src="lotus.svg" width="30" height="30" alt="">
+    <div class="header-controls">
+      <button class="music" type="button" aria-pressed="false">Music</button>
+      <button class="fullscreen" type="button" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/></svg>
+        <span>Fullscreen</span>
+      </button>
+    </div>
+  </header>
+  <audio id="background-music" src="loy-thai.m4a" preload="auto" loop></audio>
+  <span class="music-status" role="status"></span>
+  <div class="intro">
+    <h1>Loy Krathong</h1>
+    <p>Make a wish and set it afloat.</p>
+  </div>
+  <form class="actions">
+    <div class="wish">
+      <label for="wish">Your wish <span>(optional)</span></label>
+      <input id="wish" type="text" maxlength="120" autocomplete="off" enterkeyhint="send" placeholder="What are you wishing for?">
+    </div>
+    <blockquote class="sent-wish" tabindex="0" aria-label="Your wish" hidden></blockquote>
+    <div class="action-buttons">
+      <button class="release" type="submit"><img src="lotus.svg" alt="" width="25" height="25"><span>Float my krathong</span></button>
+      <button class="share" type="button" hidden>IG Share</button>
+    </div>
+    <div class="share-options">
+      <label class="share-wish" hidden><input type="checkbox"> Include my wish</label>
+      <button class="save-story" type="button" hidden>Save image</button>
+    </div>
+    <div class="caption"><span class="pond-hint">Or swipe left or right on the water</span><span role="status"></span></div>
+  </form>
+</main>
+</body>
+</html>
