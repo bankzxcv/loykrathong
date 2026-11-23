@@ -24,4 +24,3 @@ Import the repository into Vercel and leave the root directory at the repository
 - Chrome touch emulation confirmed that swipes settled the lotus on the corresponding side and a cancelled swipe restored its center position.
 - Layout checks passed at 320, 375, 390, and 430 CSS pixels wide. Reduced-motion release settled immediately.
 - Chrome mobile emulation verified wish entry and replay, both swipe directions, and rotation during a float. Checked the wish controls and fireworks in portrait and landscape, including a 568 × 280 landscape viewport.
-- Chrome denied native fullscreen in the test environment. The in-page fallback preserved the float, resized to landscape, and restored focus on exit. Native fullscreen on a supporting device and physical iPhone Safari remain unverified.
