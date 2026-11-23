@@ -1,0 +1,38 @@
+:root { color-scheme: dark; font-family: "Thonburi", "Leelawadee UI", system-ui, sans-serif; color: #fff4df; background: #10182f; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main {
+  position: relative; isolation: isolate; width: 100%; height: 100vh; height: 100svh;
+  min-height: 460px; overflow: hidden; background: #19243b;
+  --inset: clamp(20px, 4.6vw, 80px);
+}
+canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; z-index: -1; }
+canvas:active { cursor: grabbing; }
+header { display: flex; justify-content: space-between; align-items: center;
+  margin: 0 max(var(--inset), env(safe-area-inset-right)) 0 max(var(--inset), env(safe-area-inset-left));
+  padding: max(18px, env(safe-area-inset-top)) 0 15px; border-bottom: 1px solid #eddaca25; }
+.brand { display: flex; align-items: center; gap: 10px; font: 21px Georgia, serif; letter-spacing: -.4px; }
+button { font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; }
+button:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+.fullscreen { min-height: 44px; padding: 0 17px; border: 1px solid #e8d9cd55; background: #17203970; color: #fff4df; }
+.fullscreen:hover { background: #39405a; }
+.fullscreen svg { width: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.intro { position: absolute; top: max(105px,21%); left: max(var(--inset), env(safe-area-inset-left)); pointer-events: none; }
+h1 { margin: 0; color: #fff1db; font-family: "Thonburi","Leelawadee UI",serif; font-size: clamp(44px,6.8vw,102px); line-height: 1.22; font-weight: 500; letter-spacing: -.045em; }
+.intro p { margin: 9px 0 0; color: #f0d8ca; font-size: clamp(15px,1.4vw,20px); }
+.actions { position: absolute; bottom: max(4.6%, env(safe-area-inset-bottom)); width: 100%; text-align: center; pointer-events: none; }
+.release { pointer-events: auto; min-height: 54px; padding: 8px 32px; font-size: 19px; font-weight: 600; color: #33291f; border: 1px solid #ffe6ba; background: linear-gradient(180deg,#ffe9c1,#edc992); box-shadow: 0 3px 30px #ffd18f22; }
+.release img { filter: brightness(.23); }
+.release:hover { background: #ffebc9; }
+.release:active { transform: translateY(1px); }
+.release:disabled { cursor: default; opacity: .8; }
+.caption { margin-top: 10px; min-height: 22px; font-size: 14px; color: #e1d9d4; }
+html.immersive { overflow: hidden; }
+main.immersive, main:fullscreen { width: 100%; height: 100dvh; min-height: 0; }
+main.immersive { position: fixed; z-index: 5; top: var(--view-top, 0px); height: var(--view-height, 100dvh); }
+@media (max-width: 540px) { .intro { top: max(100px, 19%); } .brand { font-size: 19px; } }
+@media (max-height: 540px) and (orientation: landscape) {
+  main { min-height: 290px; } header { padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 4px; }
+  .intro { top: 19%; } h1 { font-size: 38px; } .intro p { margin-top: 0; font-size: 14px; }
+  .actions { bottom: max(4px, env(safe-area-inset-bottom)); } .release { min-height: 44px; font-size: 16px; } .caption { margin-top: 1px; }
+}
