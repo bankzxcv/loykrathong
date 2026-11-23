@@ -13,15 +13,13 @@ header { display: flex; justify-content: space-between; align-items: center;
   padding: max(18px, env(safe-area-inset-top)) 0 15px; border-bottom: 1px solid #eddaca25; }
 button { font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; }
 :is(button, input, .sent-wish):focus-visible { outline: 2px solid #fff0d8; outline-offset: 3px; }
-.header-controls { display: flex; align-items: center; gap: 8px; }
 .music-status {
   position: absolute; top: max(80px, calc(env(safe-area-inset-top) + 52px));
   right: max(var(--inset), env(safe-area-inset-right)); font-size: 13px;
 }
 .music[aria-pressed="true"] { background: #534353; border-color: #ffd9a7; }
-.fullscreen, .music { min-height: 44px; padding: 0 17px; border: 1px solid #e8d9cd55; background: #17203970; color: #fff4df; }
-:is(.fullscreen, .music):hover { background: #39405a; }
-.fullscreen svg { width: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.music { min-height: 44px; padding: 0 17px; border: 1px solid #e8d9cd55; background: #17203970; color: #fff4df; }
+.music:hover { background: #39405a; }
 .intro { position: absolute; top: max(105px,21%); left: max(var(--inset), env(safe-area-inset-left)); pointer-events: none; }
 h1 { margin: 0; color: #fff1db; font: 500 clamp(42px, 6.8vw, 102px)/1.17 Georgia, serif; letter-spacing: -.045em; }
 .intro p { margin: 9px 0 0; color: #f0d8ca; font-size: clamp(15px,1.4vw,20px); }
@@ -67,9 +65,6 @@ h1 { margin: 0; color: #fff1db; font: 500 clamp(42px, 6.8vw, 102px)/1.17 Georgia
 .save-story { min-height: 32px; border: 0; padding: 0; background: transparent; text-decoration: underline; }
 :is(.share, .share-wish, .save-story)[hidden] { display: none; }
 .caption { margin-top: 10px; min-height: 22px; font-size: 14px; color: #e1d9d4; }
-html.immersive { overflow: hidden; }
-main.immersive, main:fullscreen { width: 100%; height: 100dvh; min-height: 0; container-type: size; overflow-y: auto; }
-main.immersive { position: fixed; z-index: 5; top: var(--view-top, 0px); height: var(--view-height, 100dvh); }
 @media (max-width: 540px) { .intro { top: max(100px, 19%); } }
 @media (max-height: 540px) and (min-aspect-ratio: 4/3) and (min-width: 500px) {
   main { min-height: 280px; }
@@ -90,11 +85,4 @@ main.immersive { position: fixed; z-index: 5; top: var(--view-top, 0px); height:
   .caption { margin-top: 4px; }
   .actions:has(.share:not([hidden])) .caption { margin-top: 0; }
   .actions:has(.share:not([hidden])) .sent-wish { max-height: clamp(38px, calc(100svh - 245px), 76px); }
-}
-@container (max-height: 270px) {
-  .intro { display: none; }
-  .actions {
-    position: relative; inset: auto; margin-block: 10px 8px;
-    margin-inline-start: max(var(--inset), env(safe-area-inset-left));
-  }
 }

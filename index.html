@@ -9,7 +9,6 @@
   <link rel="icon" href="lotus.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <script defer src="pond.js"></script>
-  <script defer src="fullscreen.js"></script>
   <script defer src="music.js"></script>
 </head>
 <body>
@@ -17,13 +16,7 @@
   <canvas role="img" aria-label="A pink lotus krathong with a lit candle on a moonlit pond"></canvas>
   <header>
     <img src="lotus.svg" width="30" height="30" alt="">
-    <div class="header-controls">
-      <button class="music" type="button" aria-pressed="false">Music</button>
-      <button class="fullscreen" type="button" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/></svg>
-        <span>Fullscreen</span>
-      </button>
-    </div>
+    <button class="music" type="button" aria-pressed="false">Music</button>
   </header>
   <audio id="background-music" src="loy-thai.m4a" preload="auto" loop></audio>
   <span class="music-status" role="status"></span>
